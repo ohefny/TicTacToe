@@ -25,11 +25,12 @@ import java.util.Optional;
 
 public class Controller {
     //computer takes 'c' player takes 'p'
-    boolean playerFirst = false;
+    boolean playerFirst = true;
     boolean playerToPlay = playerFirst;
     boolean gameEnds=false;
     public GridPane gridPane;
     public StackPane[][] matrixpane = new StackPane[8][8];
+    int row,col;
     // boolean[][] player = new boolean[8][8];
   //  public boolean[][] computer = new boolean[8][8];
     public char[][]board=new char[8][8];
@@ -140,6 +141,7 @@ public class Controller {
     void changeTurn(StackPane source) {
         drawAt(source);
         if (playerToPlay) {
+            row=gridPane.getRowIndex(source);col=gridPane.getColumnIndex(source);
             board[gridPane.getRowIndex(source)][gridPane.getColumnIndex(source)] = 'p';
             if(evaluate(gridPane.getRowIndex(source), gridPane.getColumnIndex(source),'p')){
                 //add that game ends and player won
@@ -185,7 +187,7 @@ public class Controller {
         public void handle(MouseEvent event) {
             //   Shape shape;
             StackPane source = ((StackPane) event.getSource());
-            if (playerToPlay&&!gameEnds) {
+            if (source.getChildren().size()==0&&playerToPlay&&!gameEnds) {
                 changeTurn(source);
 
             }

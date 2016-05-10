@@ -8,7 +8,7 @@ import java.util.*;
  */
 public class Agent {
     static class Case {
-        static final int NOTADJ = 1, BOTHBLOCKED = 1, ONENODEWITHONESIDE = 4, ONENODEBOTHSIDE = 7, TWONODESONESIDE = 10, TWONODESBOTHSIDE = 500, WINSIT = 5000;
+        static final int NOTADJ = 1, BOTHBLOCKED = 1, ONENODEWITHONESIDE =4, ONENODEBOTHSIDE = 10, TWONODESONESIDE = 25, TWONODESBOTHSIDE = 25, WINSIT = 5000;
 
     }
 
@@ -16,10 +16,10 @@ public class Agent {
             {
                     {0, 0, 0, 0, 0, 0, 0, 0},
                     {0, 1, 1, 1, 1, 1, 1, 0},
-                    {0, 2, 2, 3, 3, 3, 2, 0},
-                    {0, 2, 2, 3, 3, 3, 2, 0},
-                    {0, 2, 2, 3, 3, 3, 2, 0},
-                    {0, 2, 2, 3, 3, 3, 2, 0},
+                    {0, 1, 2, 2, 2, 2, 1, 0},
+                    {0, 1, 2, 3, 3, 2, 1, 0},
+                    {0, 1, 2, 3, 3, 2, 1, 0},
+                    {0, 1, 2, 2, 2, 2, 1, 0},
                     {0, 1, 1, 1, 1, 1, 1, 0},
                     {0, 0, 0, 0, 0, 0, 0, 0},
 
@@ -28,14 +28,16 @@ public class Agent {
 
     enum DIR {ROW, COL, DIAGONAL1, DIAGONAL2}
 
-    ;
+
     Controller controller;
+    static short dump=0;
     static short xWinLines=135;
     static short oWinLines=135;
     boolean dumMove = false;
     short agentMoves = 0;
     short blocked = 0;
-    final short MAXDEPTH =0;
+    final short MAXDEPTH =4;
+    State lastState;
     File file = new File("D:/outputXO.txt");
     // PrintWriter pr=new PrintWriter(file);
 
@@ -43,7 +45,7 @@ public class Agent {
         this.controller = controller;
         FileOutputStream fis = new FileOutputStream(file);
         PrintStream out = new PrintStream(fis);
-        System.setOut(out);
+        //System.setOut(out);
     }
 
     public void think() {
@@ -62,22 +64,49 @@ public class Agent {
             controller.changeTurn(controller.matrixpane[row][col]);
             return;
         }
+        State currentState;
+        if(lastState==null){
+            currentState = new State(controller.board, 'p', agentMoves,xWinLines,oWinLines);
+            currentState.chosenCol= (short) controller.col;
+            currentState.chosenRow= (short) controller.row;
+        }
 
-        State currentState = new State(controller.board, 'p', agentMoves,xWinLines,oWinLines);
+        else{
+            currentState=new State(lastState);
+            currentState.setPos((controller.row*10)+(controller.col));
+        }
+        System.out.println("before | " +"player:: "+currentState.playerVals+" agent::: "+currentState.agentVals);
+        heuristicEval(currentState);
+        System.out.println("after | " +"player:: "+currentState.playerVals+" agent::: "+currentState.agentVals);
+        //heuristicEval(currentState,false);
+      /*  for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++)
+                System.out.print(currentState.board[i][j] + "||");
+            System.out.println();
+        }*/
         ArrayList<TransitionFunction> availTransitions = new ArrayList<>();
+        ArrayList<State>states=new ArrayList<>();
         for (int i = 0; i < currentState.availablepos.size(); i++) {
             State state = new State(currentState);
             state.setPos(currentState.availablepos.get(i));
-           // availTransitions.add(new TransitionFunction(state, minimax(state,0)));
-            availTransitions.add(new TransitionFunction(state, alphaBeta(state, Integer.MIN_VALUE, Integer.MAX_VALUE, 0)));
+            heuristicEval(state);
+           // heuristicEval(state,false);
+            states.add(state);
+        }
+        Collections.sort(states);
+        for(int i=0;i<states.size();i++){
+            // availTransitions.add(new TransitionFunction(state, minimax(state,0)));
+            availTransitions.add(new TransitionFunction(states.get(i), alphaBeta(states.get(i), Integer.MIN_VALUE, Integer.MAX_VALUE, 0)));
+
         }
         Collections.sort(availTransitions);
         row = availTransitions.get(0).state.chosenRow;
         col = availTransitions.get(0).state.chosenCol;
+        lastState=availTransitions.get(0).state;
         //   for(int i=0;i<availTransitions.size();i++)
         //     System.out.println(availTransitions.get(i).minimax+" ");
         //  System.out.println("------");
-        System.out.println("chosen Heuristic :: " + availTransitions.get(0).minimax);
+     //   System.out.println("chosen Heuristic :: " + availTransitions.get(0).minimax);
         agentMoves++;
         controller.changeTurn(controller.matrixpane[row][col]);
 
@@ -85,21 +114,8 @@ public class Agent {
 
     public int alphaBeta(State state, int alpha, int beta, int depth) {
         if (controller.evaluate((int) state.chosenRow, (int) state.chosenCol, state.board, state.who) || depth == MAXDEPTH) {
-            //return heuristicEval(state,false);
+             return (state.playerVals-state.agentVals)+(state.oMoves);}
 
-            if (state.who =='p') {
-                int x = heuristicEval(state);
-                         System.out.println(state.who+ " Heuristic= " + x);
-                //  System.out.println("------------------------------"+'\n');
-                return x;
-
-            } else {
-                int x = -1 * heuristicEval(state);
-                         System.out.println(state.who+ " Heuristic= " + x);
-                   System.out.println("------------------------------"+'\n');
-                return x;
-            }
-        }
         ArrayList<State> availStates = new ArrayList<>();
 
         if (state.who == 'p') {
@@ -107,6 +123,8 @@ public class Agent {
             for (int i = 0; i < state.availablepos.size(); i++) {
                 State xstate = (new State(state));
                 xstate.setPos(state.availablepos.get(i));
+                heuristicEval(xstate);
+              //  heuristicEval(xstate,false);
                 availStates.add(xstate);
                 int newVal = alphaBeta(xstate, alpha, beta, depth + 1);
                 val = Integer.max(val, newVal);
@@ -114,18 +132,21 @@ public class Agent {
                 if (beta <= alpha)
                     break;
             }
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++)
-                    System.out.print(state.board[i][j] + "||");
-                System.out.println();
-            }
-            System.out.println("Heuristic value= "+(val));
+//            for (int i = 0; i < 8; i++) {
+//                for (int j = 0; j < 8; j++)
+//                    System.out.print(state.board[i][j] + "||");
+//                System.out.println();
+//            }
+//            System.out.println("Heuristic value= "+(val));
             return val;
         } else {
             int val = Integer.MAX_VALUE;
             for (int i = 0; i < state.availablepos.size(); i++) {
                 State xstate = (new State(state));
                 xstate.setPos(state.availablepos.get(i));
+                heuristicEval(xstate);
+            //    heuristicEval(xstate,false);
+
                 availStates.add(xstate);
                 int newVal = alphaBeta(xstate, alpha, beta, depth + 1);
                 val = Integer.min(val, newVal);
@@ -133,16 +154,12 @@ public class Agent {
                 if (beta <= alpha)
                     break;
             }
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++)
-                    System.out.print(state.board[i][j] + "||");
-                System.out.println();
-            }
-            System.out.println("Heuristic value= "+(val)+"\n ------------------ ");
+
             return val;
         }
 
     }
+
 
     public int minimax(State state, int depth) {
         if (controller.evaluate((int) state.chosenRow, (int) state.chosenCol, state.board, state.who) || depth == MAXDEPTH) {
@@ -180,18 +197,19 @@ public class Agent {
     }
 
     int heuristicEval(State state) {
+
         int row = state.chosenRow;
         int col = state.chosenCol;
         int numOFfreeSides = getFreeSides(state.board, state.who, row, col);
         int heuristicVal = 0;
         Integer heuristicOnDir[] = new Integer[4];
 
-        for (int i = 0; i < 8; i++) {
+     /*   for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++)
                 System.out.print(state.board[i][j] + "||");
             System.out.println();
-        }
-        System.out.println( "Position value:: " +POSVALS[state.chosenRow][state.chosenCol]);
+        }*/
+
 
         heuristicOnDir[0] = getCase(getNodesInLine(state.board, state.who, row, col, DIR.ROW), blocked);
         heuristicOnDir[1] = getCase(getNodesInLine(state.board, state.who, row, col, DIR.COL), blocked);
@@ -203,8 +221,15 @@ public class Agent {
         heuristicVal+=getCase(getNodesInLine(state.board,state.who,row,col,DIR.DIAGONAL1),blocked);
         heuristicVal+=getCase(getNodesInLine(state.board,state.who,row,col,DIR.DIAGONAL2),blocked);*/
 
-
-        return heuristicVal +numOFfreeSides +POSVALS[state.chosenRow][state.chosenCol] - state.oMoves+heuristicEval(state,false);
+        if(state.who=='p')
+            state.playerVals+=heuristicVal +numOFfreeSides;//+POSVALS[state.chosenRow][state.chosenCol];
+                    //state.oMoves +heuristicEval(state,false);
+        else
+           state.agentVals+=heuristicVal +numOFfreeSides;//+POSVALS[state.chosenRow][state.chosenCol];
+                   //state.oMoves +heuristicEval(state,false);
+        changeingInOppenentVal(state);
+        return state.playerVals-state.agentVals;
+                //+/*POSVALS[state.chosenRow][state.chosenCol] */
 
     }
 
@@ -227,7 +252,7 @@ public class Agent {
         blocked = 0;
         //  char op=toCheck=='p' ? 'c':'p';
         switch (dir) {
-            case COL:
+            case ROW:
                 for (int i = 1; i <= 3; i++) {
                     if (col + i < board.length && board[row][col + i] == toCheck) {
                         numofNodes++;
@@ -246,7 +271,7 @@ public class Agent {
                     break;
                 }
                 break;
-            case ROW:
+            case COL:
                 for (int i = 1; i <= 3; i++) {
                     if (row + i < board.length && board[row + i][col] == toCheck) {
                         numofNodes++;
@@ -325,7 +350,7 @@ public class Agent {
         else
             return Case.WINSIT;
     }
-    private int heuristicEval(State state,boolean dum){
+ /*   private int heuristicEval(State state,boolean dum){
         int erasedLines=0;
         for(int i=3;i>=0;i--){
             if(diagonal1Free(i,state))erasedLines--;
@@ -342,6 +367,7 @@ public class Agent {
 
         return state.oLines-state.xLines;
     }
+
     private boolean diagonal1Free(int i,State state){
         int row=state.chosenRow+i;int col=state.chosenCol-i;
         if(row>=state.board.length||col<0)return false;
@@ -403,9 +429,83 @@ public class Agent {
         }
         return true;
 
-    }
+    }*/
+     void changeingInOppenentVal(State state){
+         char op=(state.who=='p')?'c':'p';
+         short row=state.chosenRow,col=state.chosenCol;
+         for (int i = 0; i < 8; i++) {
+             for (int j = 0; j < 8; j++)
+                 System.out.print(state.board[i][j] + "||");
+             System.out.println();
+         }
+         int cases[]={1,4,7,10,100,5000};
+         char oldBoard[][]=new char[8][8];
+         for(int i=0;i<8;i++){
+             for(int j=0;j<8;j++)
+                 oldBoard[i][j]=state.board[i][j];
 
-    class State {
+         }
+         System.out.println("--------------------------");
+         oldBoard[row][col]='\u0000';
+        // ArrayList<Integer>arr=new ArrayList<>();
+         int change=0;
+         int newval=0,oldval=0;
+         if(row-1>=0&&state.board[row-1][col]==op){
+              newval=getCase(getNodesInLine(state.board, op, row-1, col, DIR.COL), blocked);
+              oldval=getCase(getNodesInLine(oldBoard, op, row-1, col, DIR.COL), blocked);
+             change--;
+
+         }
+         if(row-1>=0&&col+1<state.board.length&&state.board[row-1][col+1]==op){
+             newval=getCase(getNodesInLine(state.board, op, row-1, col+1, DIR.DIAGONAL2), blocked);
+             oldval=getCase(getNodesInLine(oldBoard, op, row-1, col+1, DIR.DIAGONAL2), blocked);
+             change--;
+         }
+         if(col+1<state.board.length&&state.board[row][col+1]==op){
+             newval=getCase(getNodesInLine(state.board, op, row, col+1, DIR.ROW), blocked);
+             oldval=getCase(getNodesInLine(oldBoard, op, row, col+1, DIR.ROW), blocked);
+             change--;
+
+         }
+         if(row+1<state.board.length&&col+1<state.board.length&&state.board[row+1][col+1]==op){
+             newval=getCase(getNodesInLine(state.board, op, row+1, col+1, DIR.DIAGONAL1), blocked);
+             oldval=getCase(getNodesInLine(oldBoard, op, row+1, col+1, DIR.DIAGONAL1), blocked);
+             change--;
+         }
+         if(row+1< state.board.length&&state.board[row+1][col]==op){
+             newval=getCase(getNodesInLine(state.board, op, row+1, col, DIR.COL), blocked);
+             oldval=getCase(getNodesInLine(oldBoard, op, row+1, col, DIR.COL), blocked);
+             change--;
+         }
+         if(row+1<state.board.length&&col-1>=0&&state.board[row+1][col-1]==op){
+             newval=getCase(getNodesInLine(state.board, op, row+1, col-1, DIR.DIAGONAL2), blocked);
+             oldval=getCase(getNodesInLine(oldBoard, op, row+1, col-1, DIR.DIAGONAL2), blocked);
+             change--;
+
+         }
+         if(col-1>=0&&state.board[row][col-1]==op){
+             newval=getCase(getNodesInLine(state.board, op, row, col-1, DIR.ROW), blocked);
+             oldval=getCase(getNodesInLine(oldBoard, op, row, col-1, DIR.ROW), blocked);
+             change--;
+         }
+         if(col-1>=0&&row-1>=0&&state.board[row-1][col-1]==op){
+             newval=getCase(getNodesInLine(state.board, op, row-1, col-1, DIR.DIAGONAL1), blocked);
+             oldval=getCase(getNodesInLine(oldBoard, op, row-1, col-1, DIR.DIAGONAL1), blocked);
+             change--;
+         }
+         if(change!=0) {
+             change += newval - oldval ;
+             change-=1;
+         }
+         if(op=='p'){
+             state.playerVals+=change;
+          //   System.out.println("player Vals:: "+state.playerVals);
+         }
+         else
+             state.agentVals+=change;
+
+     }
+    class State implements Comparable{
         ArrayList<Integer> availablepos;
         short xLines;
         short oLines;
@@ -414,12 +514,16 @@ public class Agent {
         short chosenRow;
         short chosenCol;
         char who;
+        int playerVals;
+        int agentVals;
 
         public State(State preState) {
             this.xLines=preState.xLines;
             this.oLines=preState.oLines;
             availablepos = new ArrayList<>();
             this.board = new char[8][8];
+            this.playerVals=preState.playerVals;
+            this.agentVals=preState.agentVals;
             oMoves = preState.oMoves;
             if (preState.who == 'p')
                 who = 'c';
@@ -433,6 +537,11 @@ public class Agent {
                         availablepos.add((10 * i) + j);
                 }
             }
+            if(who=='c'&&controller.playerFirst)
+                oMoves++;
+            else if(who=='p'&&!controller.playerFirst){
+                oMoves++;
+            }
 
 
         }
@@ -442,6 +551,11 @@ public class Agent {
             this.oLines=oLines;
             this.oMoves = oMoves;
             this.who = who;
+            if(who=='c'&&controller.playerFirst)
+                oMoves++;
+            else if(who=='p'&&!controller.playerFirst){
+                oMoves++;
+            }
             availablepos = new ArrayList<>();
             this.board = new char[8][8];
             for (short i = 0; i < boardCopy.length; i++) {
@@ -454,6 +568,7 @@ public class Agent {
         }
 
         public void setPos(int x) {
+
             availablepos.remove(availablepos.indexOf(x));
             chosenRow = (short) (x / 10);
             chosenCol = (short) (x % 10);
@@ -461,6 +576,18 @@ public class Agent {
         }
 
 
+        @Override
+        public int compareTo(Object o) {
+            int x= playerVals-agentVals;
+            int y= ((State)(o)).playerVals-((State)(o)).agentVals;
+            if(x>y)
+                return 1;
+            if(x<y)
+                return -1;
+            else
+                return 0;
+           // return playerVals-agentVals;
+        }
     }
 
     /**
