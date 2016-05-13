@@ -42,7 +42,7 @@ public class Agent {
     static short dump=0;
     static short xWinLines=135;
     static short oWinLines=135;
-    boolean dumMove = false;
+    boolean dumMove = true;
     short agentMoves = 0;
     short blocked = 0;
     final short MAXDEPTH =3;
