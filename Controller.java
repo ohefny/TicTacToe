@@ -150,7 +150,8 @@ public class Controller {
 
             }
             playerToPlay = !playerToPlay;
-            agent.think();
+            Platform.runLater(() -> agent.think());
+           // agent.think();
 
 
         } else {
