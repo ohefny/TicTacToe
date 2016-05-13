@@ -25,7 +25,7 @@ import java.util.Optional;
 
 public class Controller {
     //computer takes 'c' player takes 'p'
-    boolean playerFirst = true;
+    boolean playerFirst = false;
     boolean playerToPlay = playerFirst;
     boolean gameEnds=false;
     public GridPane gridPane;
