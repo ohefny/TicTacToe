@@ -73,10 +73,12 @@ public class Controller {
     private void checkAllDirections(Integer row, Integer col,char[][]arr,char toCheck) {
         int count=0;
         for (int i = 0; i < 24; i++) {
-            if (i % 3 == 0 && sum != 3) {
+            if (i % 6 == 0 && sum != 3) {
                 sum = 0;
-                count = 0;
+              //  count = 0;
             }
+            if(count%3==0)
+                count=0;
             count++;
             if (i < 3) checkThisarr(arr, row + count, col,toCheck);
             else if (i < 3 * 2) checkThisarr(arr, row - count, col,toCheck);
@@ -97,10 +99,9 @@ public class Controller {
         if (sum >= 3)
             return;
         if (row > 7 || row < 0 || col > 7 || col < 0) {
-            sum = 0;
+           // sum = 0;
             return;
         } else if (arr[row][col] != toCheck) {
-            sum = 0;
             return;
         } else
             sum++;
