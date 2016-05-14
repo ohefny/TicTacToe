@@ -1,5 +1,7 @@
 package sample;
 
+import javafx.application.Platform;
+
 import java.io.*;
 import java.util.*;
 
@@ -60,15 +62,21 @@ public class Agent {
         //System.setOut(out);
     }
 
-   // public void think(){
-   //     played=false;
-      //  thread.start();
-       // while(!played);
-          //  ////System.out.println("playing");
-       // thread.stop();
-      //  controller.changeTurn(controller.matrixpane[row][col]);
-  //  }
     public void think() {
+        new Thread() {
+            public void run() {
+                startThinkink();
+                Platform.runLater(new Runnable() {
+                    public void run() {
+                        controller.changeTurn(controller.matrixpane[row][col]);
+                    }
+                });
+            }
+
+        }.start();
+    }
+
+    public void startThinkink() {
         if (controller.gameEnds)
             return;
                 if (dumMove) {
@@ -124,7 +132,7 @@ public class Agent {
                 //  ////System.out.println("------");
                 ////System.out.println("chosen Heuristic :: " + availTransitions.get(0).minimax + " oMoves " + lastState.oMoves);
                 agentMoves++;
-                controller.changeTurn(controller.matrixpane[row][col]);
+                //controller.changeTurn(controller.matrixpane[row][col]);
 
 
 
