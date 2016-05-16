@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+
+<VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="742.0" prefWidth="543.0" spacing="30.0" style="-fx-background-color: Black;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Button fx:id="easyBut" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="69.0" prefWidth="216.0" text="Easy" textAlignment="CENTER" />
+      <Button fx:id="medBut" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="69.0" prefWidth="216.0" text="Medium" textAlignment="CENTER" />
+      <Button fx:id="hardBut" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="69.0" prefWidth="216.0" text="Hard" textAlignment="CENTER" />
+      <CheckBox fx:id="forFun" mnemonicParsing="false" text="Make it Fun" textFill="WHITE" />
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="30.0">
+         <children>
+            <RadioButton fx:id="playx" mnemonicParsing="false" selected="false" text="Play X" textFill="#fcf7f7">
+               <toggleGroup>
+                  <ToggleGroup fx:id="playwith" />
+               </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="playo" mnemonicParsing="false" selected="true" text="Play O " textFill="#fcf3f3" toggleGroup="$playwith" />
+         </children>
+      </HBox>
+   </children>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+</VBox>
